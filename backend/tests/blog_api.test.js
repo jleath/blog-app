@@ -80,6 +80,57 @@ describe('adding new items to db', () => {
   });
 });
 
+describe('deleting items from db', () => {
+  test('deleting item with valid id', async () => {
+    const savedBlogs = await helper.blogsInDb();
+    const id = savedBlogs[0].id;
+    await api
+      .delete(`/api/blogs/${id}`)
+      .expect(204);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(
+      helper.initialBlogs.length - 1
+    );
+
+    const ids = blogsAtEnd.map(b => b.id);
+    expect(ids).not.toContain(id);
+  });
+});
+
+describe('updating a blog in the db', () => {
+  test('fails with statuscode 404 if blog does not exist', async () => {
+    const newBlogData = {
+      author: 'Dr. Tester',
+    };
+    const id = await helper.nonExistingId();
+    await api
+      .put(`/api/blogs/${id}`)
+      .send(newBlogData)
+      .expect(404);
+  });
+
+  test('updates blog with valid id', async () => {
+    const blogsAtStart = await helper.blogsInDb();
+    const blogToUpdate = blogsAtStart[0];
+    const newLikes = 123455;
+    const id = blogToUpdate.id;
+    await api
+      .put(`/api/blogs/${id}`)
+      .send({ likes: newLikes })
+      .expect(200);
+    const blogsAtEnd = await helper.blogsInDb();
+    blogsAtEnd.forEach(b => {
+      if (b.id === id) {
+        expect(b.likes).toBe(newLikes);
+        expect(b.author).toBe(blogToUpdate.author);
+        expect(b.title).toBe(blogToUpdate.title);
+        expect(b.url).toBe(blogToUpdate.url);
+      }
+    });
+  });
+});
+
 afterAll(() => {
   mongoose.connection.close();
 });

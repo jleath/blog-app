@@ -16,4 +16,25 @@ blogsRouter.post('/', async (request, response) => {
   }
 });
 
+blogsRouter.delete('/:id', async (request, response) => {
+  const result = await Blog.findByIdAndRemove(request.params.id);
+  response.status(204).json(result);
+});
+
+blogsRouter.put('/:id', async (request, response) => {
+  const body = request.body;
+  const blog = {
+    author: body.author,
+    title: body.title,
+    url: body.url,
+    likes: body.likes,
+  };
+  const updated = await Blog.findByIdAndUpdate(request.params.id, blog, { new: true });
+  if (!updated) {
+    response.status(404).end();
+  } else {
+    response.json(updated);
+  }
+});
+
 module.exports = blogsRouter;
