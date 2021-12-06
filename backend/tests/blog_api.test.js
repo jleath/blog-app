@@ -13,67 +13,71 @@ beforeEach(async () => {
   await Promise.all(promises);
 });
 
-test('blogs are returned as json', async () => {
-  await api
-    .get('/api/blogs')
-    .expect(200)
-    .expect('Content-Type', /application\/json/);
+describe('fetching items from db', () => {
+  test('blogs are returned as json', async () => {
+    await api
+      .get('/api/blogs')
+      .expect(200)
+      .expect('Content-Type', /application\/json/);
+  });
+
+  test('correct number of blogs returned', async () => {
+    const res = await api.get('/api/blogs');
+    expect(res.body.length).toBe(helper.initialBlogs.length);
+  });
+
+  test('blogs have property named id', async () => {
+    const res = await api.get('/api/blogs');
+    expect(res.body[0].id).toBeDefined();
+  });
 });
 
-test('correct number of blogs returned', async () => {
-  const res = await api.get('/api/blogs');
-  expect(res.body.length).toBe(helper.initialBlogs.length);
-});
+describe('adding new items to db', () => {
+  test('post request adds new item to db', async () => {
+    const newBlog = {
+      title: 'This is a test blog title',
+      author: 'Mr. Tester',
+      url: 'bigwebsite.com',
+      likes: 1000,
+    };
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(201)
+      .expect('Content-Type', /application\/json/);
 
-test('blogs have property named id', async () => {
-  const res = await api.get('/api/blogs');
-  expect(res.body[0].id).toBeDefined();
-});
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
 
-test('post request adds new item to db', async () => {
-  const newBlog = {
-    title: 'This is a test blog title',
-    author: 'Mr. Tester',
-    url: 'bigwebsite.com',
-    likes: 1000,
-  };
-  await api
-    .post('/api/blogs')
-    .send(newBlog)
-    .expect(201)
-    .expect('Content-Type', /application\/json/);
+    const contents = blogsAtEnd.map(b => b.title);
+    expect(contents).toContain(
+      'This is a test blog title'
+    );
+  });
 
-  const blogsAtEnd = await helper.blogsInDb();
-  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
+  test('number of likes defaults to 0', async () => {
+    const newBlog = {
+      title: 'This is a test blog title',
+      author: 'Mr. Tester',
+      url: 'bigwebsite.com',
+    };
+    await Blog.deleteMany({});
+    await api.post('/api/blogs').send(newBlog);
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd[0].likes).toBe(0);
+  });
 
-  const contents = blogsAtEnd.map(b => b.title);
-  expect(contents).toContain(
-    'This is a test blog title'
-  );
-});
+  test('saving new blog with no title or url results in 400 Bad Request', async () => {
+    const missingInfo = {
+      author: 'Mr. Tester',
+      likes: 1000,
+    };
 
-test('number of likes defaults to 0', async () => {
-  const newBlog = {
-    title: 'This is a test blog title',
-    author: 'Mr. Tester',
-    url: 'bigwebsite.com',
-  };
-  await Blog.deleteMany({});
-  await api.post('/api/blogs').send(newBlog);
-  const blogsAtEnd = await helper.blogsInDb();
-  expect(blogsAtEnd[0].likes).toBe(0);
-});
-
-test('saving new blog with no title or url results in 400 Bad Request', async () =>{
-  const missingInfo = {
-    author: 'Mr. Tester',
-    likes: 1000,
-  };
-
-  await api
-    .post('/api/blogs')
-    .send(missingInfo)
-    .expect(400);
+    await api
+      .post('/api/blogs')
+      .send(missingInfo)
+      .expect(400);
+  });
 });
 
 afterAll(() => {
