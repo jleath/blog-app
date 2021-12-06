@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "jest --verbose",
-    "dev": "nodemon index.js",
+    "start": "cross-env NODE_ENV=production node index.js",
+    "test": "cross-env NODE_ENV=test jest --verbose --runInBand",
+    "dev": "cross-env NODE_ENV=development nodemon index.js",
     "lint": "eslint ."
   },
   "author": "Josh Leath",
@@ -14,10 +14,13 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "express-async-errors": "^3.1.1",
     "mongoose": "^6.0.14",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "supertest": "^6.1.6"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "dotenv": "^10.0.0",
     "eslint": "^8.3.0",
     "jest": "^27.4.3",
