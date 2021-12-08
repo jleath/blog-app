@@ -40,6 +40,15 @@ describe('user management', () => {
     const usersAtEnd = await helper.usersInDb();
     expect(usersAtEnd).toHaveLength(usersAtStart.length);
   });
+  test('fetch existing users from db', async () => {
+    const usersAtStart = await helper.usersInDb();
+    const users = await api
+      .get('/api/users')
+      .expect(200)
+      .expect('Content-Type', /application\/json/);
+
+    expect(users.body).toHaveLength(usersAtStart.length);
+  });
 });
 
 afterAll(() => {
