@@ -70,10 +70,19 @@ const usersInDb = async () => {
   return users.map(user => user.toJSON());
 };
 
+const saveDummyBlog = async (api, token) => {
+  const savedBlog = await api
+    .post('/api/blogs')
+    .set('authorization', `bearer ${token}`)
+    .send(initialBlogs[0]);
+  return savedBlog.body.id;
+};
+
 module.exports = {
   blogsInDb,
   usersInDb,
   initialBlogs,
   initialUsers,
   nonExistingId,
+  saveDummyBlog,
 };

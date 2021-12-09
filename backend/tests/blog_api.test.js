@@ -123,60 +123,35 @@ describe('deleting items from db', () => {
   });
 
   test('deleting item without a user token', async () => {
-    const savedBlog = await api
-      .post('/api/blogs')
-      .set('authorization', `bearer ${userToken}`)
-      .send(helper.initialBlogs[0]);
-
-    const id = savedBlog.body.id;
-
+    const id = await helper.saveDummyBlog(api, userToken);
     const blogsAtStart = await helper.blogsInDb();
-
     await api
       .delete(`/api/blogs/${id}`)
       .expect(401);
-
     const blogsAtEnd = await helper.blogsInDb();
     expect(blogsAtEnd).toHaveLength(blogsAtStart.length);
   });
 
   test('deleting item with faulty token', async () => {
-    const savedBlog = await api
-      .post('/api/blogs')
-      .set('authorization', `bearer ${userToken}`)
-      .send(helper.initialBlogs[0]);
-
-    const id = savedBlog.body.id;
-
+    const id = await helper.saveDummyBlog(api, userToken);
     const blogsAtStart = await helper.blogsInDb();
-
     await api
       .delete(`/api/blogs/${id}`)
       .set('authorization', `bearer ${userToken}bad`)
       .expect(401);
-
     const blogsAtEnd = await helper.blogsInDb();
     expect(blogsAtEnd).toHaveLength(blogsAtStart.length);
   });
 
   test('deleting item with valid id', async () => {
     const blogsAtStart = await helper.blogsInDb();
-
-    const savedBlog = await api
-      .post('/api/blogs')
-      .set('authorization', `bearer ${userToken}`)
-      .send(helper.initialBlogs[0]);
-
-    const id = savedBlog.body.id;
-
+    const id = await helper.saveDummyBlog(api, userToken);
     await api
       .delete(`/api/blogs/${id}`)
       .set('authorization', `bearer ${userToken}`)
       .expect(204);
-
     const blogsAtEnd = await helper.blogsInDb();
     expect(blogsAtEnd).toHaveLength(blogsAtStart.length);
-
     const ids = blogsAtEnd.map(b => b.id);
     expect(ids).not.toContain(id);
   });
