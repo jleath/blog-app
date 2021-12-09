@@ -11,6 +11,9 @@ usersRouter.post('/', async (request, response) => {
     response.status(400).json({ error: 'user with that username already exists' });
   }
 
+  if (!body.password || body.password.length < 3) {
+    response.status(400).json({ error: 'password must be at least 3 characters' });
+  }
   const saltRounds = 10;
   const passwordHash = await bcrypt.hash(body.password, saltRounds);
 
@@ -26,8 +29,21 @@ usersRouter.post('/', async (request, response) => {
 });
 
 usersRouter.get('/', async (request, response) => {
-  const users = await User.find({});
+  const users = await User
+    .find({})
+    .populate('blogs', { url: 1, title: 1, author: 1, id: 1 });
   response.json(users);
+});
+
+usersRouter.get('/:id', async (request, response) => {
+  const user = await User
+    .findById(request.params.id)
+    .populate('blogs', { url: 1, title: 1, author: 1, id: 1 });
+  if (user) {
+    response.json(user);
+  } else {
+    response.status(400).end();
+  }
 });
 
 module.exports = usersRouter;

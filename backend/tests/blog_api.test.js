@@ -5,6 +5,15 @@ const app = require('../app');
 const api = supertest(app);
 const Blog = require('../models/blog');
 
+const getValidToken = async () => {
+  const username = helper.initialUsers[0].username;
+  const password = helper.initialUsers[0].password;
+  const loginResponse = await api
+    .post('/api/login')
+    .send({ username, password });
+  return loginResponse.body.token;
+};
+
 beforeEach(async () => {
   await Blog.deleteMany({});
   const blogObjects = helper.initialBlogs
@@ -40,8 +49,12 @@ describe('adding new items to db', () => {
       url: 'bigwebsite.com',
       likes: 1000,
     };
+
+    const token = await getValidToken();
+
     await api
       .post('/api/blogs')
+      .set('authorization', `bearer ${token}`)
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/);
@@ -61,8 +74,14 @@ describe('adding new items to db', () => {
       author: 'Mr. Tester',
       url: 'bigwebsite.com',
     };
+
+    const token = await getValidToken();
+
     await Blog.deleteMany({});
-    await api.post('/api/blogs').send(newBlog);
+    await api
+      .post('/api/blogs')
+      .set('authorization', `bearer ${token}`)
+      .send(newBlog);
     const blogsAtEnd = await helper.blogsInDb();
     expect(blogsAtEnd[0].likes).toBe(0);
   });
@@ -73,8 +92,11 @@ describe('adding new items to db', () => {
       likes: 1000,
     };
 
+    const token = await getValidToken();
+
     await api
       .post('/api/blogs')
+      .set('authorization', `bearer ${token}`)
       .send(missingInfo)
       .expect(400);
   });
