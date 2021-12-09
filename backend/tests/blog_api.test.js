@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const supertest = require('supertest');
+const jwt = require('jsonwebtoken');
 const helper = require('./test_helper');
 const app = require('../app');
 const api = supertest(app);
@@ -14,11 +15,15 @@ const getValidToken = async () => {
   return loginResponse.body.token;
 };
 
+const getIdFromToken = (token) => {
+  return jwt.verify(token, process.env.SECRET).id;
+};
+
 beforeEach(async () => {
   await Blog.deleteMany({});
   const blogObjects = helper.initialBlogs
     .map(blog => new Blog(blog));
-  const promises = blogObjects.map(blog => blog.save());
+  let promises = blogObjects.map(blog => blog.save());
   await Promise.all(promises);
 });
 
@@ -52,7 +57,7 @@ describe('adding new items to db', () => {
 
     const token = await getValidToken();
 
-    await api
+    const blog = await api
       .post('/api/blogs')
       .set('authorization', `bearer ${token}`)
       .send(newBlog)
@@ -66,6 +71,13 @@ describe('adding new items to db', () => {
     expect(contents).toContain(
       'This is a test blog title'
     );
+    const userId = getIdFromToken(token);
+    const user = await api
+      .get(`/api/users/${userId}`)
+      .expect(200);
+
+    const blogIds = user.body.blogs.map(b => b.id.toString());
+    expect(blogIds).toContain(blog.body.id);
   });
 
   test('number of likes defaults to 0', async () => {
@@ -123,7 +135,8 @@ describe('deleting items from db', () => {
   });
 
   test('deleting item without a user token', async () => {
-    const id = await helper.saveDummyBlog(api, userToken);
+    const blog = await helper.saveDummyBlog(api, userToken);
+    const id = blog.id;
     const blogsAtStart = await helper.blogsInDb();
     await api
       .delete(`/api/blogs/${id}`)
@@ -133,7 +146,8 @@ describe('deleting items from db', () => {
   });
 
   test('deleting item with faulty token', async () => {
-    const id = await helper.saveDummyBlog(api, userToken);
+    const blog = await helper.saveDummyBlog(api, userToken);
+    const id = blog.id;
     const blogsAtStart = await helper.blogsInDb();
     await api
       .delete(`/api/blogs/${id}`)
@@ -145,15 +159,22 @@ describe('deleting items from db', () => {
 
   test('deleting item with valid id', async () => {
     const blogsAtStart = await helper.blogsInDb();
-    const id = await helper.saveDummyBlog(api, userToken);
+    const blog = await helper.saveDummyBlog(api, userToken);
+    const id = blog.id;
     await api
       .delete(`/api/blogs/${id}`)
       .set('authorization', `bearer ${userToken}`)
       .expect(204);
+
     const blogsAtEnd = await helper.blogsInDb();
     expect(blogsAtEnd).toHaveLength(blogsAtStart.length);
     const ids = blogsAtEnd.map(b => b.id);
     expect(ids).not.toContain(id);
+
+    const user = await api
+      .get(`/api/users/${blog.user}`)
+      .expect(200);
+    expect(user.body.blogs).not.toContain(id);
   });
 });
 

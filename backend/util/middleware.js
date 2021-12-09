@@ -1,5 +1,8 @@
 const morgan = require('morgan');
+const jwt = require('jsonwebtoken');
 const logger = require('./logger');
+const User = require('../models/user');
+
 morgan.token('postData', function (req) {return JSON.stringify(req.body);});
 const requestLogger = morgan(':method :url :status :res[content-length] - :response-time ms :postData');
 
@@ -35,9 +38,22 @@ const tokenExtractor = (request, response, next) => {
   next();
 };
 
+const userExtractor = async (request, response, next) => {
+  const decoded = request.token
+    ? jwt.verify(request.token, process.env.SECRET)
+    : null;
+  if (!request.token || !decoded.id) {
+    request.user = null;
+  } else {
+    request.user = await User.findById(decoded.id);
+  }
+  next();
+};
+
 module.exports = {
   requestLogger,
   errorHandler,
   unknownEndpoint,
   tokenExtractor,
+  userExtractor,
 };

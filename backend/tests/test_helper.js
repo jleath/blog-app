@@ -75,7 +75,7 @@ const saveDummyBlog = async (api, token) => {
     .post('/api/blogs')
     .set('authorization', `bearer ${token}`)
     .send(initialBlogs[0]);
-  return savedBlog.body.id;
+  return savedBlog.body;
 };
 
 module.exports = {
