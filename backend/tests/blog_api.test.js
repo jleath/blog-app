@@ -103,17 +103,79 @@ describe('adding new items to db', () => {
 });
 
 describe('deleting items from db', () => {
-  test('deleting item with valid id', async () => {
-    const savedBlogs = await helper.blogsInDb();
-    const id = savedBlogs[0].id;
+  let userToken = undefined;
+  beforeEach(async () => {
+    await Blog.deleteMany({});
+    const newUser = {
+      username: 'myname',
+      password: 'secretpassword',
+    };
+
+    await api
+      .post('/api/users')
+      .send(newUser);
+
+    const loginResponse = await api
+      .post('/api/login')
+      .send(newUser);
+
+    userToken = loginResponse.body.token;
+  });
+
+  test('deleting item without a user token', async () => {
+    const savedBlog = await api
+      .post('/api/blogs')
+      .set('authorization', `bearer ${userToken}`)
+      .send(helper.initialBlogs[0]);
+
+    const id = savedBlog.body.id;
+
+    const blogsAtStart = await helper.blogsInDb();
+
     await api
       .delete(`/api/blogs/${id}`)
+      .expect(401);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(blogsAtStart.length);
+  });
+
+  test('deleting item with faulty token', async () => {
+    const savedBlog = await api
+      .post('/api/blogs')
+      .set('authorization', `bearer ${userToken}`)
+      .send(helper.initialBlogs[0]);
+
+    const id = savedBlog.body.id;
+
+    const blogsAtStart = await helper.blogsInDb();
+
+    await api
+      .delete(`/api/blogs/${id}`)
+      .set('authorization', `bearer ${userToken}bad`)
+      .expect(401);
+
+    const blogsAtEnd = await helper.blogsInDb();
+    expect(blogsAtEnd).toHaveLength(blogsAtStart.length);
+  });
+
+  test('deleting item with valid id', async () => {
+    const blogsAtStart = await helper.blogsInDb();
+
+    const savedBlog = await api
+      .post('/api/blogs')
+      .set('authorization', `bearer ${userToken}`)
+      .send(helper.initialBlogs[0]);
+
+    const id = savedBlog.body.id;
+
+    await api
+      .delete(`/api/blogs/${id}`)
+      .set('authorization', `bearer ${userToken}`)
       .expect(204);
 
     const blogsAtEnd = await helper.blogsInDb();
-    expect(blogsAtEnd).toHaveLength(
-      helper.initialBlogs.length - 1
-    );
+    expect(blogsAtEnd).toHaveLength(blogsAtStart.length);
 
     const ids = blogsAtEnd.map(b => b.id);
     expect(ids).not.toContain(id);
