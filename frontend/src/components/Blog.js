@@ -39,9 +39,9 @@ const Blog = ({ blog, addLike, deleteBlog }) => {
       <button style={hideWhenVisible} onClick={toggleVisibility}>show</button>
       <div className="blogDetails" style={showWhenVisible}>
         <p>{blog.url}</p>
-        <p>Likes: {numLikes} <button onClick={handleLikeClick}>like</button></p>
+        <p>Likes: {numLikes} <button className="like-button" onClick={handleLikeClick}>like</button></p>
         <button onClick={toggleVisibility}>hide</button>
-        <button onClick={handleDeleteClick}>delete</button>
+        <button className="delete-button" onClick={handleDeleteClick}>delete</button>
       </div>
     </div>
   );

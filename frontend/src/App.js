@@ -85,7 +85,7 @@ const App = () => {
     } catch (exception) {
       console.log(exception);
       setErrorNotification(
-        `error deleting blog: ${blogObject.jtitle} by ${blogObject.author}`
+        `error deleting blog: ${blogObject.title} by ${blogObject.author}`
       );
     }
   };
@@ -133,10 +133,12 @@ const App = () => {
             {blogForm()}
           </div>
       }
-      {blogs
-        .slice()
-        .sort((a, b) => b.likes - a.likes)
-        .map(blog => <Blog key={blog.id} blog={blog} addLike={addLike} deleteBlog={deleteBlog}/>)}
+      <div id="blog-list">
+        {blogs
+          .slice()
+          .sort((a, b) => b.likes - a.likes)
+          .map(blog => <Blog key={blog.id} blog={blog} addLike={addLike} deleteBlog={deleteBlog}/>)}
+      </div>
     </>
   );
 };
