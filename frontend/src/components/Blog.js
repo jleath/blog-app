@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { deleteBlog, addLike } from '../reducers/blogReducer';
 
-const Blog = ({ blog, addLike, deleteBlog }) => {
+const Blog = ({ blog }) => {
+  const dispatch = useDispatch();
   const [visible, setVisible] = useState(false);
-  const [numLikes, setNumLikes] = useState(blog.likes);
 
   const showWhenVisible = { display: visible ? '' : 'none' };
   const hideWhenVisible = { display: visible ? 'none' : '' };
@@ -20,16 +22,12 @@ const Blog = ({ blog, addLike, deleteBlog }) => {
   };
 
   const handleLikeClick = async () => {
-    let newBlog = { ...blog, likes: numLikes + 1 };
-    let returnedBlog = await addLike(newBlog);
-    if (returnedBlog) {
-      setNumLikes(returnedBlog.likes);
-    }
+    dispatch(addLike(blog));
   };
 
   const handleDeleteClick = async () => {
     if (window.confirm(`Are you sure you want to delete ${blog.title}?`)) {
-      deleteBlog(blog);
+      dispatch(deleteBlog(blog));
     }
   };
 
@@ -39,7 +37,7 @@ const Blog = ({ blog, addLike, deleteBlog }) => {
       <button style={hideWhenVisible} onClick={toggleVisibility}>show</button>
       <div className="blogDetails" style={showWhenVisible}>
         <p>{blog.url}</p>
-        <p>Likes: {numLikes} <button className="like-button" onClick={handleLikeClick}>like</button></p>
+        <p>Likes: {blog.likes} <button className="like-button" onClick={handleLikeClick}>like</button></p>
         <button onClick={toggleVisibility}>hide</button>
         <button className="delete-button" onClick={handleDeleteClick}>delete</button>
       </div>

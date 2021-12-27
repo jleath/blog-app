@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { submitBlog } from '../reducers/blogReducer';
 
-const NewBlogForm = ({ submitBlog }) => {
+const NewBlogForm = () => {
+  const dispatch = useDispatch();
+
   const [url, setUrl] = useState('');
   const [author, setAuthor] = useState('');
   const [title, setTitle] = useState('');
@@ -19,7 +23,7 @@ const NewBlogForm = ({ submitBlog }) => {
 
   const handleFormSubmit = event => {
     event.preventDefault();
-    submitBlog({ title, author, url });
+    dispatch(submitBlog({ title, author, url }));
     setAuthor('');
     setTitle('');
     setUrl('');
